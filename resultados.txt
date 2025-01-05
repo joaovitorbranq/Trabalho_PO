@@ -1,0 +1,91 @@
+grasp 10 iterações:
+
+
+1o:
+Melhor objetivo encontrado: 0.0
+
+Escala de Alice:
+ - Dia 1, Turno: Manhã
+ - Dia 2, Turno: Tarde
+ - Dia 3, Turno: Tarde
+ - Dia 4, Turno: Manhã
+ - Dia 5, Turno: Noite
+ - Dia 6, Turno: Noite
+ - Dia 7, Turno: Tarde
+
+Escala de Bob:
+ - Dia 1, Turno: Tarde
+ - Dia 2, Turno: Manhã
+ - Dia 3, Turno: Noite
+ - Dia 4, Turno: Tarde
+ - Dia 5, Turno: Manhã
+ - Dia 6, Turno: Manhã
+ - Dia 7, Turno: Noite
+
+Escala de Carol:
+ - Dia 1, Turno: Noite
+ - Dia 2, Turno: Noite
+ - Dia 3, Turno: Manhã
+ - Dia 4, Turno: Noite
+ - Dia 5, Turno: Tarde
+ - Dia 6, Turno: Tarde
+
+
+2o:
+Melhor objetivo encontrado: 0.0
+
+Escala de Alice:
+ - Dia 1, Turno: Noite
+ - Dia 2, Turno: Manhã
+ - Dia 3, Turno: Manhã
+ - Dia 4, Turno: Noite
+ - Dia 5, Turno: Noite
+ - Dia 6, Turno: Manhã
+ - Dia 7, Turno: Noite
+
+Escala de Bob:
+ - Dia 1, Turno: Manhã
+ - Dia 2, Turno: Tarde
+ - Dia 3, Turno: Tarde
+ - Dia 4, Turno: Manhã
+ - Dia 5, Turno: Tarde
+ - Dia 6, Turno: Tarde
+ - Dia 7, Turno: Tarde
+
+Escala de Carol:
+ - Dia 1, Turno: Tarde
+ - Dia 2, Turno: Noite
+ - Dia 3, Turno: Noite
+ - Dia 4, Turno: Tarde
+ - Dia 5, Turno: Manhã
+ - Dia 6, Turno: Noite
+
+
+3o:
+Melhor objetivo encontrado: 0.0
+
+Escala de Alice:
+ - Dia 1, Turno: Tarde
+ - Dia 2, Turno: Noite
+ - Dia 3, Turno: Noite
+ - Dia 4, Turno: Tarde
+ - Dia 5, Turno: Manhã
+ - Dia 6, Turno: Manhã
+ - Dia 7, Turno: Noite
+
+Escala de Bob:
+ - Dia 1, Turno: Manhã
+ - Dia 2, Turno: Tarde
+ - Dia 3, Turno: Tarde
+ - Dia 4, Turno: Manhã
+ - Dia 5, Turno: Noite
+ - Dia 6, Turno: Tarde
+ - Dia 7, Turno: Manhã
+
+Escala de Carol:
+ - Dia 1, Turno: Noite
+ - Dia 2, Turno: Manhã
+ - Dia 3, Turno: Manhã
+ - Dia 4, Turno: Noite
+ - Dia 5, Turno: Tarde
+ - Dia 6, Turno: Noite
