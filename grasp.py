@@ -76,7 +76,7 @@ def melhoria_local(solution):
     return solution
 
 # Algoritmo GRASP com monitoramento do custo
-def grasp(prob, iterations=10):
+def grasp(prob, iterations):
     melhor_solucao = None
     melhor_custo = float('inf')
     custos = []
@@ -97,7 +97,8 @@ def grasp(prob, iterations=10):
 
 # Executar o GRASP
 start_time = time.time()
-melhor_solucao, melhor_custo, custos = grasp(prob, iterations=10000)
+iterations_input = int(input("Digite o número de iterações para o algoritmo GRASP: "))
+melhor_solucao, melhor_custo, custos = grasp(prob, iterations=iterations_input)
 end_time = time.time()
 
 # Exibir a melhor solução encontrada

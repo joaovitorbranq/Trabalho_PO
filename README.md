@@ -33,3 +33,11 @@ PROBLEMA ESCOLHIDO:
 META-HEURÍSTICAS ESCOLHIDAS:
     _GRASP
     _VNS
+
+COMO RODAR OS ARQUIVOS:
+    Primeiramente criar um ambiente virtual python para instalar o pulp:
+        python -m venv pulp_venv
+    Depois, ativar o virtual env em seu terminal
+        pulp_venv/Scripts/.\Activate.ps1 (no caso do powershell)
+    Finalmente, voltar à raiz do projeto e rodar o arquivo python:
+        python nome_do_arquivo.py
