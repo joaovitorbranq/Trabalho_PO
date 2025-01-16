@@ -1,69 +1,112 @@
+import pulp
 import random
-from mip import Model, xsum, BINARY, minimize
+import time
 
-# Definição dos conjuntos e parâmetros
-e_funcionarios = ['Alice', 'Bob', 'Carol']
-d_dias = range(7)  # 7 dias
-turnos = ['Manhã', 'Tarde', 'Noite']
-demanda_turno = {t: 1 for t in turnos}  # 1 funcionário por turno
+# Parâmetros do problema
+medicos = ["Dr. A", "Dr. B", "Dr. C", "Dr. D"]
+turnos = ["Manhã", "Tarde", "Noite"]
+dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"]
+horas_por_turno = 8
+max_horas_semanais = 40
 
-# Função para gerar solução inicial gulosa randomizada
-def construir_solucao_inicial():
-    model = Model("Employee Scheduling")
-    x = {(e, d, t): model.add_var(var_type=BINARY, name=f"x_{e}_{d}_{t}")
-         for e in e_funcionarios for d in d_dias for t in turnos}
+# Preferências de turno para cada médico (penalidades para turnos indesejados)
+preferencias = {
+    "Dr. A": {"Manhã": 0, "Tarde": 1, "Noite": 3},
+    "Dr. B": {"Manhã": 1, "Tarde": 0, "Noite": 2},
+    "Dr. C": {"Manhã": 3, "Tarde": 2, "Noite": 0},
+    "Dr. D": {"Manhã": 2, "Tarde": 1, "Noite": 0}
+}
 
-    # Construção gulosa randomizada: atribuir turnos de forma parcial aleatória
-    for d in d_dias:
-        funcionarios_disponiveis = e_funcionarios.copy()  # lista de funcionários disponíveis para o dia
-        random.shuffle(funcionarios_disponiveis)  # embaralhar a lista para aleatoriedade
+# Criar o problema de otimização
+prob = pulp.LpProblem("Employee_Scheduling", pulp.LpMinimize)
+
+# Variáveis de decisão binárias
+x = pulp.LpVariable.dicts("turno", (medicos, dias, turnos), cat="Binary")
+
+# Função objetivo: minimizar o custo total das penalidades
+prob += pulp.lpSum(preferencias[m][t] * x[m][d][t] for m in medicos for d in dias for t in turnos)
+
+# Restrições: cada turno deve ser preenchido por um médico, e médicos não devem exceder o máximo de horas semanais
+for d in dias:
+    for t in turnos:
+        prob += pulp.lpSum(x[m][d][t] for m in medicos) == 1
+
+for m in medicos:
+    prob += pulp.lpSum(x[m][d][t] * horas_por_turno for d in dias for t in turnos) <= max_horas_semanais
+
+# Construção de uma solução inicial aleatória
+def construcao_inicial_aleatoria():
+    solution = {m: {d: {t: 0 for t in turnos} for d in dias} for m in medicos}
+    horarios_livres = {m: max_horas_semanais // horas_por_turno for m in medicos}
+
+    for d in dias:
         for t in turnos:
-            if funcionarios_disponiveis:  # Se houver funcionários disponíveis para o turno
-                escolhido = funcionarios_disponiveis.pop()
-                x[escolhido, d, t].lb = 1  # Fixando a escolha para o turno e dia
-                x[escolhido, d, t].ub = 1  # Garantir que o turno será atribuído
+            medicos_disponiveis = [m for m in medicos if horarios_livres[m] > 0]
+            m = random.choice(medicos_disponiveis)
+            solution[m][d][t] = 1
+            horarios_livres[m] -= 1
 
-    model.optimize()
-    return model, x
+    return solution
 
-# Função de busca local para ajuste fino da solução
-def busca_local(model, x):
-    melhora = True
-    while melhora:
-        melhora = False
-        for e in e_funcionarios:
-            for d in d_dias:
+# Função para calcular o custo de uma solução
+def calcular_custo(solution):
+    return sum(preferencias[m][t] * solution[m][d][t] for m in medicos for d in dias for t in turnos)
+
+# Função de melhoria local
+def melhoria_local(solution):
+    melhorou = True
+    while melhorou:
+        melhorou = False
+        melhor_custo = calcular_custo(solution)
+        for m in medicos:
+            for d in dias:
                 for t in turnos:
-                    if x[e, d, t].x >= 0.99:
-                        model.remove(x[e, d, t])
-                        x[e, d, t] = model.add_var(var_type=BINARY, name=f"x_{e}_{d}_{t}")
-                        model.optimize()
-                        if model.objective_value < model.objective_value:
-                            melhora = True
-                        else:
-                            x[e, d, t].lb = 1  # Reverter mudança
-    return model
+                    if solution[m][d][t] == 1:
+                        for n in medicos:
+                            if n != m and solution[n][d][t] == 0:
+                                # Trocar médicos
+                                solution[m][d][t], solution[n][d][t] = 0, 1
+                                novo_custo = calcular_custo(solution)
+                                if novo_custo < melhor_custo:
+                                    melhor_custo = novo_custo
+                                    melhorou = True
+                                else:
+                                    # Reverter a troca
+                                    solution[m][d][t], solution[n][d][t] = 1, 0
+    return solution
 
-# Algoritmo GRASP completo
-def grasp(iteracoes):
+# Algoritmo GRASP com monitoramento do custo
+def grasp(prob, iterations=10):
     melhor_solucao = None
-    melhor_objetivo = float('inf')
+    melhor_custo = float('inf')
+    custos = []
 
-    for _ in range(iteracoes):
-        model, x = construir_solucao_inicial()
-        model = busca_local(model, x)
+    for i in range(iterations):
+        solucao_inicial = construcao_inicial_aleatoria()
+        solucao_melhorada = melhoria_local(solucao_inicial)
+        custo_atual = calcular_custo(solucao_melhorada)
 
-        if model.objective_value < melhor_objetivo:
-            melhor_solucao = x
-            melhor_objetivo = model.objective_value
+        if custo_atual < melhor_custo:
+            melhor_custo = custo_atual
+            melhor_solucao = solucao_melhorada
 
-    print(f"Melhor objetivo encontrado: {melhor_objetivo}")
-    for e in e_funcionarios:
-        print(f"\nEscala de {e}:")
-        for d in d_dias:
-            for t in turnos:
-                if melhor_solucao[e, d, t].x >= 0.99:
-                    print(f" - Dia {d+1}, Turno: {t}")
+        custos.append(melhor_custo)
+        print(f"Iteração {i + 1}: Custo Atual = {custo_atual}, Melhor Custo = {melhor_custo}")
 
-# Executar o GRASP com 10 iterações
-grasp(1)
+    return melhor_solucao, melhor_custo, custos
+
+# Executar o GRASP
+start_time = time.time()
+melhor_solucao, melhor_custo, custos = grasp(prob, iterations=10000)
+end_time = time.time()
+
+# Exibir a melhor solução encontrada
+print(f"Solução ótima com custo: {melhor_custo}")
+for m in medicos:
+    print(f"\nEscala de {m}:")
+    for d in dias:
+        for t in turnos:
+            if melhor_solucao[m][d][t] == 1:
+                print(f"- {d}: {t}")
+
+print(f"\nTempo total de processamento: {end_time - start_time:.4f} segundos")
