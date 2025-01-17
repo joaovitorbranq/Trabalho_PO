@@ -52,53 +52,82 @@ def construcao_inicial_aleatoria():
 def calcular_custo(solution):
     return sum(preferencias[m][t] * solution[m][d][t] for m in medicos for d in dias for t in turnos)
 
-# Função de melhoria local
-def melhoria_local(solution):
-    melhorou = True
-    while melhorou:
-        melhorou = False
-        melhor_custo = calcular_custo(solution)
-        for m in medicos:
-            for d in dias:
-                for t in turnos:
-                    if solution[m][d][t] == 1:
-                        for n in medicos:
-                            if n != m and solution[n][d][t] == 0:
-                                # Trocar médicos
-                                solution[m][d][t], solution[n][d][t] = 0, 1
-                                novo_custo = calcular_custo(solution)
-                                if novo_custo < melhor_custo:
-                                    melhor_custo = novo_custo
-                                    melhorou = True
-                                else:
-                                    # Reverter a troca
-                                    solution[m][d][t], solution[n][d][t] = 1, 0
+# Função de vizinhança 1: Troca entre médicos em turnos específicos
+def vizinhanca_1(solution):
+    # Escolher um turno aleatório e dois médicos para trocar
+    m1, m2 = random.sample(medicos, 2)
+    d = random.choice(dias)
+    t = random.choice(turnos)
+
+    if solution[m1][d][t] == 1 and solution[m2][d][t] == 0:
+        solution[m1][d][t], solution[m2][d][t] = 0, 1
     return solution
 
-# Algoritmo GRASP com monitoramento do custo
-def grasp(prob, iterations):
+# Função de vizinhança 2: Modificar a alocação de turnos
+def vizinhanca_2(solution):
+    # Trocar aleatoriamente um turno de um médico
+    m = random.choice(medicos)
+    d1, d2 = random.sample(dias, 2)
+    t1 = random.choice(turnos)
+    t2 = random.choice(turnos)
+
+    if solution[m][d1][t1] == 1:
+        solution[m][d1][t1], solution[m][d2][t2] = 0, 1
+    return solution
+
+# Função de vizinhança 3: Trocar turnos inteiros entre dois médicos
+def vizinhanca_3(solution):
+    m1, m2 = random.sample(medicos, 2)
+    d1, d2 = random.sample(dias, 2)
+    t = random.choice(turnos)
+
+    if solution[m1][d1][t] == 1 and solution[m2][d2][t] == 0:
+        solution[m1][d1][t], solution[m2][d2][t] = 0, 1
+    return solution
+
+# Algoritmo VNS
+def vns(prob, iterations=10000, max_neighborhood=3):
     melhor_solucao = None
     melhor_custo = float('inf')
     custos = []
 
     for i in range(iterations):
         solucao_inicial = construcao_inicial_aleatoria()
-        solucao_melhorada = melhoria_local(solucao_inicial)
-        custo_atual = calcular_custo(solucao_melhorada)
+        solucao_atual = solucao_inicial
+        custo_atual = calcular_custo(solucao_atual)
+
+        while True:
+            # Explorar as vizinhanças
+            melhorou = False
+            for vizinhanca_id in range(1, max_neighborhood+1):
+                if vizinhanca_id == 1:
+                    solucao_atual = vizinhanca_1(solucao_atual)
+                elif vizinhanca_id == 2:
+                    solucao_atual = vizinhanca_2(solucao_atual)
+                elif vizinhanca_id == 3:
+                    solucao_atual = vizinhanca_3(solucao_atual)
+                
+                novo_custo = calcular_custo(solucao_atual)
+                if novo_custo < custo_atual:
+                    custo_atual = novo_custo
+                    melhorou = True
+                    break  # Se uma melhoria foi encontrada, recomeçar a busca
+
+            if not melhorou:  # Se nenhuma melhoria foi encontrada, parar
+                break
 
         if custo_atual < melhor_custo:
             melhor_custo = custo_atual
-            melhor_solucao = solucao_melhorada
+            melhor_solucao = solucao_atual
 
         custos.append(melhor_custo)
         print(f"Iteração {i + 1}: Custo Atual = {custo_atual}, Melhor Custo = {melhor_custo}")
 
     return melhor_solucao, melhor_custo, custos
 
-# Executar o GRASP
+# Executar o VNS
 start_time = time.time()
-# iterations_input = int(input("Digite o número de iterações para o algoritmo GRASP: "))
-melhor_solucao, melhor_custo, custos = grasp(prob, iterations=100)
+melhor_solucao, melhor_custo, custos = vns(prob, iterations=1000)
 end_time = time.time()
 
 # Exibir a melhor solução encontrada
